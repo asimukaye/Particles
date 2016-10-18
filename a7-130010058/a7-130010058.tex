@@ -1,0 +1,55 @@
+\documentclass[11pt, a4paper]{article}
+\usepackage[affil-it]{authblk}
+\usepackage{etoolbox}
+\usepackage{lmodern}
+\usepackage{titlesec}
+\usepackage{float}
+\usepackage{amsfonts}
+
+\makeatletter
+\patchcmd{\@maketitle}{\LARGE \@title}{\fontsize{20}{19.2}\selectfont\@title}{}{}
+\makeatother
+
+\renewcommand\Authfont{\fontsize{16}{14.4}\selectfont}
+\renewcommand\Affilfont{\fontsize{12}{10.8}\itshape}
+
+\title{\textbf{Assignment 7}}
+\author{Vikas Kurapati - 130010058}
+\usepackage{graphicx}
+\begin{document}
+\maketitle
+\newpage
+\section{Flow over a cylinder}
+\subsection{Vortex positions}
+Positions of vortices at t=1,3,5 are shown 
+\begin{figure}[H]
+\centering
+\includegraphics[width = \textwidth]{method1vor1.png}
+\caption{Vortices at t=1s}
+\end{figure}
+\begin{figure}[H]
+\centering
+\includegraphics[width = \textwidth]{method1vor3.png}
+\caption{Vortices at t=3s}
+\end{figure}
+\begin{figure}[H]
+\centering
+\includegraphics[width = \textwidth]{method1vor5.png}
+\caption{Vortices at t=5s}
+\end{figure}
+\subsection{Velocity Contours}
+Velocity contours and velocity contours only in the right half plane are shown at t=5s
+\begin{figure}[H]
+\includegraphics[width = \textwidth]{contour.png}
+\caption{Velocity Contours at t= 5s}
+\end{figure}
+\begin{figure}[H]
+\includegraphics[width = \textwidth]{contour1.png}
+\caption{Velocity Contours in the right half plane at t= 5s}
+\end{figure}
+\subsection{Drag Coefficient}
+Variation of drag coefficient with time is shown
+\begin{figure}[H]
+\includegraphics[width = \textwidth]{cd.png}
+\end{figure}
+\end{document}

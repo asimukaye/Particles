@@ -1,0 +1,8 @@
+#!/bin/bash
+
+python a6-130010058.py
+pdflatex a6-130010058.tex
+pdflatex a6-130010058.tex
+rm *.png
+rm a6-130010058.aux
+rm a6-130010058.log

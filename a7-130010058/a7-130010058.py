@@ -205,7 +205,7 @@ def cylinder_flow1(dt,tf,r,n,Re,u_inf):
 			if abs(j) < r:
 				V[ii][jj] = 0.0
 	plt.contour(X,Y,V,50)
-	plt.savefig('contour.png')
+	plt.savefig('method1contour.png')
 	plt.close()
 	
 	X,Y = np.mgrid[-2.:2.:51j,-2.:2.:51j]
@@ -216,13 +216,116 @@ def cylinder_flow1(dt,tf,r,n,Re,u_inf):
 			if abs(j) < r or j.real<0:
 				V[ii][jj] = 0.0
 	plt.contour(X,Y,V,50)
-	plt.savefig('contour1.png')
+	plt.savefig('method1contour1.png')
 	plt.close()
 
 	DRAG = (vor_mom[:-1] - vor_mom[1:])/dt
 	cd = DRAG/(r*abs(u_inf)*abs(u_inf))
 	plt.plot(T,cd)
-	plt.savefig('cd.png')
+	plt.savefig('method1cd.png')
+	plt.close()
+
+def cylinder_flow2(dt,tf,r,n,Re,u_inf):
+	nu = (2.0*abs(u_inf)*r/Re)
+	pos_vor = []
+	gamma_vor = []
+	vor_mom = np.array([0.0])
+	t = 0.0
+	T =[]
+	while t <= tf:
+		B = computeB(r,n,pos_vor,gamma_vor,u_inf = 1. + 0.0j,v_b = 0. + 0.0j,pos_source = [0.0+0.0j],str_source =[0.0])
+		gamma_diff = LA.lstsq(A,B)[0]
+		v = u_inf + vortex_velocities_vortices(pos_vor, gamma_vor) + vortex_velocities_panels(pos_vor,panels_matrix,gamma_diff)
+		midpos = pos_vor + v*dt/4.
+		midpos = reflect_vor1(midpos,r)
+		B = computeB(r,n,midpos,gamma_vor,u_inf = 1. + 0.0j,v_b = 0. + 0.0j,pos_source = [0+0.0j],str_source =[0.0])
+		gamma_matrix = LA.lstsq(A,B)[0]
+		midv = u_inf + vortex_velocities_vortices(midpos, gamma_vor) + vortex_velocities_panels(midpos,panels_matrix,gamma_matrix)
+		pos_vor = pos_vor + midv*dt/2.
+		pos_vor = reflect_vor1(pos_vor,r)
+		for i,panel in enumerate(panels_matrix):
+			strength = (gamma_diff[i] + gamma_diff[(i+1)%len(gamma_diff)])*panel.length/2.0
+			if abs(strength) > 0.1:
+				n_d = int(abs(strength)/0.1) + 1
+				x = diffusion(n_d,nu,dt) + panel.control_point
+				x = reflect_vor2(x,panel)	
+				pos_vor = np.concatenate([pos_vor,x])
+				small_gamma = strength/n_d
+				gamma_vor = np.concatenate([gamma_vor,np.full(len(x),small_gamma)])
+
+		B = computeB(r,n,pos_vor,gamma_vor,u_inf = 1. + 0.0j,v_b = 0. + 0.0j,pos_source = [0.0+0.0j],str_source =[0.0])
+		gamma_diff = LA.lstsq(A,B)[0]
+		v = u_inf + vortex_velocities_vortices(pos_vor, gamma_vor) + vortex_velocities_panels(pos_vor,panels_matrix,gamma_diff)
+		midpos = pos_vor + v*dt/4.
+		midpos = reflect_vor1(midpos,r)
+		B = computeB(r,n,midpos,gamma_vor,u_inf = 1. + 0.0j,v_b = 0. + 0.0j,pos_source = [0+0.0j],str_source =[0.0])
+		gamma_matrix = LA.lstsq(A,B)[0]
+		midv = u_inf + vortex_velocities_vortices(midpos, gamma_vor) + vortex_velocities_panels(midpos,panels_matrix,gamma_matrix)
+		pos_vor = pos_vor + midv*dt/2.
+		pos_vor = reflect_vor1(pos_vor,r)
+
+		for k in [1,3,5]:
+			if abs(t - k) < 1e-9:
+				positive = []
+				negative = []
+				for i,gam in enumerate(gamma_vor):
+					if gam > 0:
+						positive.append(pos_vor[i])
+					else:
+						negative.append(pos_vor[i])
+
+				positive = np.array(positive)
+				negative = np.array(negative)
+				plt.figure(figsize = (17.0,9.0))
+				plt.plot(positive.real,positive.imag,"o")
+				plt.plot(negative.real,negative.imag,"o")
+				panel_x = []
+				panel_y = []
+				for panel in panels_matrix:
+					panel_x.append(panel.p1.real)
+					panel_y.append(panel.p1.imag)
+				panel_x.append(panels_matrix[0].p1.real)
+				panel_y.append(panels_matrix[0].p1.imag)
+				plt.plot(panel_x,panel_y,label = 'Panels')
+				plt.axis([-8.0,8.0,-4.0,4.0])
+				#plt.show()
+				plt.savefig('method2vor'+str(k)+'.png')
+				plt.close()	
+
+		mom_ij = 0.0
+		for i,z_i in enumerate(pos_vor):
+			mom_ij = mom_ij + gamma_vor[i]*z_i.imag
+		vor_mom = np.concatenate([vor_mom,[mom_ij]])
+		T.append(t)
+		t = t + dt
+		print t
+
+	X,Y = np.mgrid[-2.:2.:51j,-2.:2.:51j]
+	Z = X + 1.0j*Y
+	V = abs(u_inf + point_velocities(Z,pos_vor,gamma_vor,panels_matrix,gamma_matrix))
+	for ii,i in enumerate(Z):
+		for jj,j in enumerate(i):
+			if abs(j) < r:
+				V[ii][jj] = 0.0
+	plt.contour(X,Y,V,50)
+	plt.savefig('method2contour.png')
+	plt.close()
+	
+	X,Y = np.mgrid[-2.:2.:51j,-2.:2.:51j]
+	Z = X + 1.0j*Y
+	V = abs(u_inf + point_velocities(Z,pos_vor,gamma_vor,panels_matrix,gamma_matrix))
+	for ii,i in enumerate(Z):
+		for jj,j in enumerate(i):
+			if abs(j) < r or j.real<0:
+				V[ii][jj] = 0.0
+	plt.contour(X,Y,V,50)
+	plt.savefig('method2contour1.png')
+	plt.close()
+
+	DRAG = (vor_mom[:-1] - vor_mom[1:])/dt
+	cd = DRAG/(r*abs(u_inf)*abs(u_inf))
+	plt.plot(T,cd)
+	plt.savefig('method2cd.png')
 	plt.close()
 
 if __name__ == '__main__':
@@ -235,3 +338,4 @@ if __name__ == '__main__':
 	A = computeA(r,n) 
 	u_inf = 1.0 + 0.0j
 	cylinder_flow1(dt,tf,r,n,Re,u_inf)
+	cylinder_flow2(dt,tf,r,n,Re,u_inf)

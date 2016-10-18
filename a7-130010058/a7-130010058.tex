@@ -19,7 +19,8 @@
 \begin{document}
 \maketitle
 \newpage
-\section{Flow over a cylinder}
+\section{Flow over a cylinder:Method1}
+Method 1 is where we advect first and diffuse for a full time step.
 \subsection{Vortex positions}
 Positions of vortices at t=1,3,5 are shown 
 \begin{figure}[H]
@@ -40,16 +41,50 @@ Positions of vortices at t=1,3,5 are shown
 \subsection{Velocity Contours}
 Velocity contours and velocity contours only in the right half plane are shown at t=5s
 \begin{figure}[H]
-\includegraphics[width = \textwidth]{contour.png}
+\includegraphics[width = \textwidth]{method1contour.png}
 \caption{Velocity Contours at t= 5s}
 \end{figure}
 \begin{figure}[H]
-\includegraphics[width = \textwidth]{contour1.png}
+\includegraphics[width = \textwidth]{method1contour1.png}
 \caption{Velocity Contours in the right half plane at t= 5s}
 \end{figure}
 \subsection{Drag Coefficient}
 Variation of drag coefficient with time is shown
 \begin{figure}[H]
-\includegraphics[width = \textwidth]{cd.png}
+\includegraphics[width = \textwidth]{method1cd.png}
+\end{figure}
+\section{Flow over a cylinder:Method2}
+Method 2 is where we advect first for half time step and diffuse for a full time step.
+\subsection{Vortex positions}
+Positions of vortices at t=1,3,5 are shown 
+\begin{figure}[H]
+\centering
+\includegraphics[width = \textwidth]{method2vor1.png}
+\caption{Vortices at t=1s}
+\end{figure}
+\begin{figure}[H]
+\centering
+\includegraphics[width = \textwidth]{method2vor3.png}
+\caption{Vortices at t=3s}
+\end{figure}
+\begin{figure}[H]
+\centering
+\includegraphics[width = \textwidth]{method2vor5.png}
+\caption{Vortices at t=5s}
+\end{figure}
+\subsection{Velocity Contours}
+Velocity contours and velocity contours only in the right half plane are shown at t=5s
+\begin{figure}[H]
+\includegraphics[width = \textwidth]{method2contour.png}
+\caption{Velocity Contours at t= 5s}
+\end{figure}
+\begin{figure}[H]
+\includegraphics[width = \textwidth]{method2contour1.png}
+\caption{Velocity Contours in the right half plane at t= 5s}
+\end{figure}
+\subsection{Drag Coefficient}
+Variation of drag coefficient with time is shown
+\begin{figure}[H]
+\includegraphics[width = \textwidth]{method2cd.png}
 \end{figure}
 \end{document}

@@ -133,6 +133,23 @@ def reflect_vor2(diff,panel):
 			x.append(z_i)
 	return np.array(x)
 
+def animate(X,Y,name):
+    fig = plt.figure()
+    ax = plt.axes(xlim=(np.amin(X), np.amax(X)+0.1), ylim=(np.amin(Y)-0.1, np.amax(Y)+0.1))
+    line, = ax.plot([], [], lw=2)
+
+    def init():
+        line.set_data([],[])
+        return line,
+    def animate(i):
+        line.set_data(X[:i], Y[:i])
+        return line,
+    
+    anim = animation.FuncAnimation(fig, animate, init_func=init,
+                               frames=200, interval=20, blit=True)
+    anim.save(name+'.mp4', fps=30, extra_args=['-vcodec', 'libx264'])
+    plt.show()
+
 def cylinder_flow1(dt,tf,r,n,Re,u_inf):
 	nu = (2.0*abs(u_inf)*r/Re)
 	pos_vor = []
@@ -197,6 +214,7 @@ def cylinder_flow1(dt,tf,r,n,Re,u_inf):
 		t = t + dt
 		print t
 
+'''
 	X,Y = np.mgrid[-2.:2.:51j,-2.:2.:51j]
 	Z = X + 1.0j*Y
 	V = abs(u_inf + point_velocities(Z,pos_vor,gamma_vor,panels_matrix,gamma_matrix))
@@ -218,7 +236,7 @@ def cylinder_flow1(dt,tf,r,n,Re,u_inf):
 	plt.contour(X,Y,V,50)
 	plt.savefig('method1contour1.png')
 	plt.close()
-
+'''
 	DRAG = (vor_mom[:-1] - vor_mom[1:])/dt
 	cd = DRAG/(r*abs(u_inf)*abs(u_inf))
 	plt.plot(T,cd)
@@ -338,4 +356,4 @@ if __name__ == '__main__':
 	A = computeA(r,n) 
 	u_inf = 1.0 + 0.0j
 	cylinder_flow1(dt,tf,r,n,Re,u_inf)
-	cylinder_flow2(dt,tf,r,n,Re,u_inf)
+	#cylinder_flow2(dt,tf,r,n,Re,u_inf)

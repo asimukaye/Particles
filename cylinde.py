@@ -116,7 +116,7 @@ def get_kr(z, vor, delta):
             return r/delta
     else:
         return 1.0
-    
+
 def velocity_vortices(pos, gamma):
     vel = np.zeros_like(pos) + 1.0j*np.zeros_like(pos)
     for i, z_i in enumerate(pos):
@@ -126,14 +126,18 @@ def velocity_vortices(pos, gamma):
     return np.asarray(vel)
 
 def velocity_panels(pos, panels):
-    vel = np.zeros_like(pos) + 1.0j*np.zeros_like(pos)
-    #vel = []
-    for i,z_i in enumerate(pos):
-    	v = 0.0 + 0.0j
+    #vel = np.zeros_like(pos) + 1.0j*np.zeros_like(pos)
+    vel = []
+    for i, z_i in enumerate(pos):
+        v = 0.0 + 0.0j
         for j,p_j in enumerate(panels):
-            v = v + panel_velocity(panels, p_j, j, pos)[0]
-    	vel[i] = v
-    return vel
+            v = v + panel_velocity(panels, p_j, j, z_i)
+            #print type(panel_velocity(panels, p_j, j, z_i))
+            #print type(v)
+        vel.append(v)
+        #vel[i] = complex(v)
+    #print vel
+    return np.asarray(vel)
 
 def panel_velocity(panels, p_i, j, z):
     #print panels
@@ -157,15 +161,32 @@ def point_velocities(Z,pos_vor,gamma_vor,panels_matrix,gamma_matrix):
             vel[ii] = vel[ii] + vortex_velocities_panels(i,panels_matrix,gamma_matrix)
     return vel
 
+def velocity_vortices1(z, vortex_position, gamma_vortex):
+    vel = np.zeros_like(z) + 1.0j*np.zeros_like(z)
+    #print z
+    for i, v_i in enumerate(z):
+        for j, v_j in enumerate(vortex_position):
+            if v_i != v_j:
+                vel[i] = vortex_velocity(v_i, v_j, gamma_vortex[j], 0.1)
+    return np.asarray(vel)
 
-# In[63]:
+
+def velocity_point(z, gamma_vortex, vortex_position, panels):
+    n = len(z)
+    vel = []
+    for i in range(n):
+        v1 = velocity_panels(z[i], panels)
+        v2 = velocity_vortices1(z[i], vortex_position, gamma_vortex)
+        vel.append(v1+v2)
+    return np.asarray(vel)
+
 
 def reflect_blobs(z, R):
     z1 = []
     #print z
-    for i in range(len(z)):  
-        #print z
-        if(abs(z[i] < R)):
+    for i in range(len(z)):
+        #print z[i]
+        if(abs(z[i]) < R):
             z1.append((2.0*R - abs(z[i]))*np.exp(1.0j*np.angle(z[i])))
         else:
             z1.append(z[i])
@@ -189,7 +210,7 @@ def reflect_vor2(diff,panel):
 
 # In[65]:
 
-def flow_cylinder(dt=0.1, tf=1.0, R=1.0, N=50, Re=1000.0, u_inf=1.0+0.0*1j, gamma_max=0.1, mu=0.0):
+def flow_cylinder(dt=0.1, tf=5.0, R=1.0, N=50, Re=1000.0, u_inf=1.0+0.0*1j, gamma_max=0.1, mu=0.0):
     panels = create_panels(N, R)
     A = compute_A(N, R)
     vortex_position = []
@@ -201,6 +222,7 @@ def flow_cylinder(dt=0.1, tf=1.0, R=1.0, N=50, Re=1000.0, u_inf=1.0+0.0*1j, gamm
     while t <= tf:
         B = compute_B(N, R, vortex_position, gamma_vortex, u_inf=1.0+0.0*1j, u_body=0.0+0.0*1j)
         gamma1 = np.linalg.lstsq(A,B)[0]
+        gamma1 = np.ravel(gamma1)
         for i,p in enumerate(panels):
             p.gamma = gamma1[i]
             #print p.gamma
@@ -210,23 +232,24 @@ def flow_cylinder(dt=0.1, tf=1.0, R=1.0, N=50, Re=1000.0, u_inf=1.0+0.0*1j, gamm
         midpos = reflect_blobs(midpos,R)
         B = compute_B(N, R, midpos, gamma_vortex, u_inf=1.0+0.0*1j, u_body=0.0+0.0*1j)
         gamma2 = np.linalg.lstsq(A,B)[0]
+        gamma2 = np.ravel(gamma2)
         for i,p in enumerate(panels):
             p.gamma = gamma2[i]
         midv = u_inf + velocity_vortices(midpos, gamma_vortex) + velocity_panels(midpos, panels)
         vortex_position = vortex_position + midv*dt
         vortex_position = reflect_blobs(vortex_position,R)
         for i,p_i in enumerate(panels):
-        	gamma3 = (panels[i].gamma + panels[(i+1)%len(panels)].gamma)*p_i.length/2.0
-        	print gamma3
-        	if abs(gamma3) > gamma_max:
-            	nd = int(abs(gamma3)/gamma_max) + 1
-            	x = random_vortex_method(mu,nu,dt,nd) + p_i.zc
-            	x = reflect_blobs(x, p_i)	
-            	vortex_position = np.concatenate([vortex_position, x])
-            	gamma4 = gamma3/nd
-            	gamma_vortex = np.concatenate([gamma_vortex,np.full(len(x),gamma4)])
+            gamma3 = (panels[i].gamma + panels[(i+1)%len(panels)].gamma)*p_i.length/2.0
+            #print gamma3
+            if abs(gamma3) > gamma_max:
+                nd = int(abs(gamma3)/gamma_max) + 1
+                x = random_vortex_method(mu,nu,dt,nd) + p_i.zc
+                x = reflect_vor2(x, p_i)
+                vortex_position = np.concatenate([vortex_position, x])
+                gamma4 = gamma3/nd
+                gamma_vortex = np.concatenate([gamma_vortex,np.full(len(x),gamma4)])
 
-        for k in [0.8]:
+        for k in [1.0, 2.0, 3.0, 4.0, 5.0]:
             if abs(t - k) < 1e-9:
                 positive_vortices = []
                 negative_vortices = []
@@ -248,11 +271,15 @@ def flow_cylinder(dt=0.1, tf=1.0, R=1.0, N=50, Re=1000.0, u_inf=1.0+0.0*1j, gamm
                     panel_y.append(panel.z1.imag)
                 panel_x.append(panels[0].z1.real)
                 panel_y.append(panels[0].z1.imag)
-                plt.plot(panel_x,panel_y,label = 'Panels')
+                #plt.plot(panel_x,panel_y,label = 'Panels')
+                theta = np.linspace(0, 2*np.pi, 201)
+                x_cylinder = R*np.cos(theta)
+                y_cylinder = R*np.sin(theta)
+                plt.plot(x_cylinder, y_cylinder)
                 plt.axis([-8.0,8.0,-4.0,4.0])
                 plt.show()
                 #plt.savefig('method1vor'+str(k)+'.png')
-                #plt.close()	
+                #plt.close()
 
         mom_ij = 0.0
         for i,z_i in enumerate(vortex_position):
@@ -261,5 +288,33 @@ def flow_cylinder(dt=0.1, tf=1.0, R=1.0, N=50, Re=1000.0, u_inf=1.0+0.0*1j, gamm
         T.append(t)
         t = t + dt
         print t
-        
+
+    X,Y = np.mgrid[-2.:2.:51j,-2.:2.:51j]
+    Z = X + 1.0j*Y
+    V = abs(u_inf + velocity_point(Z, gamma_vortex, vortex_position, panels))
+    for ii, i in enumerate(Z):
+        for jj,j in enumerate(i):
+            if abs(j) < R:
+        	       V[ii][jj] = 0.0
+    plt.contour(X,Y,V,50)
+    plt.savefig('contour.png')
+    plt.close()
+    """
+    X,Y = np.mgrid[-2.:2.:51j,-2.:2.:51j]
+    Z = X + 1.0j*Y
+    V = abs(u_inf + point_velocities(Z,pos_vor,gamma_vor,panels_matrix,gamma_matrix))
+    for ii,i in enumerate(Z):
+    	for jj,j in enumerate(i):
+    		if abs(j) < r or j.real<0:
+    			V[ii][jj] = 0.0
+    plt.contour(X,Y,V,50)
+    plt.savefig('contour1.png')
+    plt.close()
+    """
+    DRAG = (vor_mom[:-1] - vor_mom[1:])/dt
+    cd = DRAG/(R*abs(u_inf)*abs(u_inf))
+    plt.plot(T,cd)
+    plt.savefig('cd.png')
+    plt.close()
+
 flow_cylinder()

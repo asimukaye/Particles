@@ -1,0 +1,11 @@
+mkdir -p ../output
+python a8-130010058.py
+
+case 
+jupyter nbconvert --execute --to html a8-130010058.ipynb
+jupyter nbconvert --execute --to pdf a8-130010058.ipynb
+
+mv  *.png ../output
+
+mv a8-130010058.html ../output/
+mv a8-130010058.pdf ../output/
